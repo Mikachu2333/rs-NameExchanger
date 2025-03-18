@@ -1,6 +1,6 @@
 [package]
 name = "rs-NaneExchanger"
-version = "1.0.0"
+version = "1.0.2"
 edition = "2021"
 
 [lib]
@@ -8,7 +8,7 @@ name = "exchange_lib"
 path = "lib/lib.rs"
 
 [[bin]]
-name = "NaneExchanger"
+name = "NameExchanger"
 path = "src/main.rs"
 
 [build-dependencies]

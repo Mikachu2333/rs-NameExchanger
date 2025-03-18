@@ -19,7 +19,8 @@ static WINDOW_HANDLE: AtomicI32 = AtomicI32::new(0);
 
 fn main() -> eframe::Result {
     let args = std::env::args().collect::<Vec<String>>();
-    if args.len() > 2 {
+    println!("{:?}", args);
+    if args.len() == 3 {
         let path1 = CString::new(args[1].clone()).unwrap();
         let path2 = CString::new(args[2].clone()).unwrap();
         let result = exchange(path1.as_ptr(), path2.as_ptr());
@@ -29,10 +30,10 @@ fn main() -> eframe::Result {
             panic!("{}", output_trans(result))
         }
     } else {
-        let icon = Icon::from_path("./123.ico", Some((256, 256))).unwrap();
+        let icon_data = include_bytes!("../raw_icon_data").to_vec();
         let _tray_icon = TrayIconBuilder::new()
-            .with_tooltip("system-tray - tray icon library!")
-            .with_icon(icon)
+            .with_icon(Icon::from_rgba(icon_data, 256, 256).unwrap())
+            .with_tooltip("左键显示隐藏，右键退出\n左鍵顯示隱藏，右鍵退出")
             .build()
             .unwrap();
 
@@ -122,12 +123,13 @@ impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         if !ctx.input(|i| i.raw.dropped_files.is_empty()) {
             ctx.input(|i| {
-                for file in &i.raw.dropped_files {
-                    if let Some(path) = &file.path {
+                for dropped_file in &i.raw.dropped_files {
+                    if let Some(file_path) = &dropped_file.path {
+                        let path_string = file_path.to_string_lossy().to_string();
                         if self.drop_counter {
-                            self.path_string1 = path.to_string_lossy().to_string();
+                            self.path_string1 = path_string;
                         } else {
-                            self.path_string2 = path.to_string_lossy().to_string();
+                            self.path_string2 = path_string;
                         }
                         self.drop_counter = !self.drop_counter;
                     }
@@ -205,38 +207,22 @@ impl eframe::App for MyApp {
                 ui.horizontal(|ui| {
                     ui.label("文件1：");
                     egui::ScrollArea::horizontal()
-                        .scroll_bar_visibility(
-                            egui::scroll_area::ScrollBarVisibility::AlwaysVisible,
-                        )
+                        .id_salt("scroll1")
                         .show(ui, |ui| {
-                            //println!("{},{}", ui.available_width(), self.path_string1.len() * 5);
-                            ui.set_min_width(f32::max(
-                                ui.available_width(),
-                                self.path_string1.len() as f32 * 12.5,
-                            ));
-                            ui.add(
-                                egui::TextEdit::singleline(&mut self.path_string1)
-                                    .desired_width(f32::INFINITY),
-                            );
+                            egui::TextEdit::singleline(&mut self.path_string1)
+                                .clip_text(false)
+                                .show(ui);
                         });
                 });
-                ui.add_space(10.0);
+                ui.add_space(15.0);
                 ui.horizontal(|ui| {
                     ui.label("文件2：");
                     egui::ScrollArea::horizontal()
-                        .scroll_bar_visibility(
-                            egui::scroll_area::ScrollBarVisibility::AlwaysVisible,
-                        )
+                        .id_salt("scroll2")
                         .show(ui, |ui| {
-                            //println!("{},{}", ui.available_width(), self.path_string2.len() * 5);
-                            ui.set_min_width(f32::max(
-                                ui.available_width(),
-                                self.path_string2.len() as f32 * 12.5,
-                            ));
-                            ui.add(
-                                egui::TextEdit::singleline(&mut self.path_string2)
-                                    .desired_width(f32::INFINITY),
-                            );
+                            egui::TextEdit::singleline(&mut self.path_string2)
+                                .clip_text(false)
+                                .show(ui);
                         });
                 });
             });
@@ -249,6 +235,10 @@ impl eframe::App for MyApp {
                     let path1 = CString::new(self.path_string1.clone()).unwrap();
                     let path2 = CString::new(self.path_string2.clone()).unwrap();
                     self.result_string = output_trans(exchange(path1.as_ptr(), path2.as_ptr()));
+                    if self.result_string == "Success".to_owned() {
+                        self.path_string1.clear();
+                        self.path_string2.clear();
+                    }
                 }
             });
         });
@@ -258,6 +248,7 @@ impl eframe::App for MyApp {
     }
 }
 
+// 将错误码转换为友好的提示文本
 fn output_trans(num: i32) -> String {
     match num {
         0 => "Success",
@@ -269,6 +260,7 @@ fn output_trans(num: i32) -> String {
     .to_string()
 }
 
+// 加载系统字体
 fn load_fonts(ctx: &egui::Context) {
     let mut fonts = egui::FontDefinitions::default();
     fonts.font_data.insert(
@@ -289,6 +281,7 @@ fn load_fonts(ctx: &egui::Context) {
     ctx.set_pixels_per_point(1.2);
 }
 
+// 将窗口句柄转换为 HWND 类型
 fn handle_to_hwnd(handle: Win32WindowHandle) -> windows_sys::Win32::Foundation::HWND {
     let hwnd_isize: isize = handle.hwnd.into();
     let hwnd = hwnd_isize as *mut c_void;
@@ -296,6 +289,7 @@ fn handle_to_hwnd(handle: Win32WindowHandle) -> windows_sys::Win32::Foundation::
     hwnd as windows_sys::Win32::Foundation::HWND
 }
 
+// 获取宽字符串长度
 fn wcslen(ptr: *const u16) -> usize {
     let mut len = 0;
     while unsafe { *ptr.add(len) } != 0 {
@@ -304,6 +298,7 @@ fn wcslen(ptr: *const u16) -> usize {
     len
 }
 
+// 获取 SendTo 文件夹中快捷方式的路径
 fn get_lnk_path() -> PathBuf {
     let mut path_ptr = std::ptr::null_mut();
     let result = unsafe {
@@ -331,6 +326,7 @@ fn get_lnk_path() -> PathBuf {
     }
 }
 
+// 创建或删除快捷方式
 fn creat_lnk(mode: bool) {
     let path = get_lnk_path();
     let _ = std::fs::remove_file(&path);

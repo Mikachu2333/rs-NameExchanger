@@ -12,12 +12,12 @@ fn main() {
     version |= 1 << 48;
     version |= 0 << 32;
     version |= 0 << 16;
-    version |= 1;
+    version |= 2;
 
     res.set_version_info(VersionInfo::FILEVERSION, version)
         .set_version_info(VersionInfo::PRODUCTVERSION, version);
 
-    res.set_icon("./123.ico");
+    res.set_icon("./res.ico");
 
     if let Err(e) = res.compile() {
         eprintln!("{}", e);
