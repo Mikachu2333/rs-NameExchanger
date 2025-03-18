@@ -19,6 +19,8 @@ fn main() {
 
     res.set_icon("./res.ico");
 
+    res.set_manifest_file("manifest.xml");
+
     if let Err(e) = res.compile() {
         eprintln!("{}", e);
         std::process::exit(1);
