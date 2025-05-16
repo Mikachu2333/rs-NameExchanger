@@ -29,10 +29,19 @@ pub extern "C" fn exchange(path1: *const c_char, path2: *const c_char) -> i32 {
     let mut all_infos = NameExchange::new();
 
     // 用于校验文件夹路径最后是否为斜杠与双引号的闭包
-    let dir_check = |s: String| PathBuf::from(s.trim().trim_matches(['"', '\\', '\'']));
+    let path_check = |s: String| {
+        let temp = s
+            .trim()
+            .trim_matches(['\'', '"', '\\', '\'', '/'])
+            .replace("\\", "/")
+            .replace("//", "/");
+        PathBuf::from(&temp)
+            .canonicalize()
+            .unwrap_or_else(|_| PathBuf::from(&temp))
+    };
     let mut packed_path = GetPathInfo {
-        path1: dir_check(path1),
-        path2: dir_check(path2),
+        path1: path_check(path1),
+        path2: path_check(path2),
     };
 
     (all_infos.f1.is_exist, all_infos.f2.is_exist) = (packed_path).if_exist(exe_dir);
@@ -84,56 +93,43 @@ pub extern "C" fn exchange(path1: *const c_char, path2: *const c_char) -> i32 {
         return 3_i32;
     }
 
-    //1 -> file1 should be renamed first
+    //1 -> parent1, 2 -> parent2
     let mode = packed_path.if_root();
 
-    /*
-    println!(//test
-        "f1: {}\t{}\t{}",
+    dbg!(
+        //test
         all_infos.f1.packed_info.parent_dir.display(),
-        all_infos.f1.packed_info.name,
-        all_infos.f1.packed_info.ext
+        &all_infos.f1.packed_info.name,
+        &all_infos.f1.packed_info.ext
     );
-    println!(
-        "f2: {}\t{}\t{}",
+    dbg!(
         all_infos.f2.packed_info.parent_dir.display(),
-        all_infos.f2.packed_info.name,
-        all_infos.f2.packed_info.ext
+        &all_infos.f2.packed_info.name,
+        &all_infos.f2.packed_info.ext
     );
-    */
+    dbg!(mode);
 
-    if all_infos.f1.is_file & all_infos.f2.is_file {
-        //all files
-        NameExchange::rename_each(&all_infos, false, true)
-    } else if (!all_infos.f1.is_file) && (!all_infos.f2.is_file) {
-        //all dirs
-        if mode == 1 {
-            //file1 contains file2
-            NameExchange::rename_each(&all_infos, true, true)
-        } else if mode == 2 {
-            //file2 contains file1
-            NameExchange::rename_each(&all_infos, true, false)
-        } else {
-            //no contains
-            NameExchange::rename_each(&all_infos, false, true)
+    match (all_infos.f1.is_file, all_infos.f2.is_file) {
+        (true, true) => NameExchange::rename_each(&all_infos, false, true),
+        (false, false) => {
+            // 都是目录，检查包含关系
+            match mode {
+                1 => NameExchange::rename_each(&all_infos, true, false),
+                2 => NameExchange::rename_each(&all_infos, true, true),
+                _ => NameExchange::rename_each(&all_infos, false, true),
+            }
         }
-    } else {
-        // one file and one dir
-        if all_infos.f1.is_file {
-            //1 is file and 2 is dir so impossible 1 contains 2
-            if mode == 1 {
-                //file1 rename first
+        (true, false) => {
+            if mode == 2 {
                 NameExchange::rename_each(&all_infos, true, true)
             } else {
                 NameExchange::rename_each(&all_infos, false, true)
             }
-        } else {
-            //same
-            if mode == 2 {
-                //file2 rename first
+        }
+        (false, true) => {
+            if mode == 1 {
                 NameExchange::rename_each(&all_infos, true, false)
             } else {
-                //file2 rename first
                 NameExchange::rename_each(&all_infos, false, false)
             }
         }
@@ -142,34 +138,26 @@ pub extern "C" fn exchange(path1: *const c_char, path2: *const c_char) -> i32 {
 
 #[cfg(test)]
 mod tests {
-    use std::env::args;
-    use std::{ffi::CString, fs::remove_file};
+    use std::{
+        ffi::CString,
+        path::{Path, PathBuf},
+    };
 
-    fn clear_olds() {
-        let _ = remove_file("file1.ext1");
-        let _ = remove_file("file2.ext2");
-        let _ = remove_file("file2.ext1");
-        let _ = remove_file("file1.ext2");
-
-        let mut new_file1 = std::fs::File::create("file1.ext1").unwrap();
-        let mut new_file2 = std::fs::File::create("file2.ext2").unwrap();
-        let _ = std::io::Write::write_all(&mut new_file1, b"");
-        let _ = std::io::Write::write_all(&mut new_file2, b"");
+    fn clear_olds() -> (PathBuf, PathBuf) {
+        let file1 = Path::new(r"D:\Desktop\f\s\2.txt");
+        let file2 = Path::new(r"D:\Desktop\f");
+        return (file1.to_path_buf(), file2.to_path_buf());
     }
+
     #[test]
     fn it_works() {
-        clear_olds();
+        let (file1, file2) = clear_olds();
         // 0 => Success，1 => No Exist
         // 2 => Permission Denied，3 => New File Already Exists
+        let trans = |s: PathBuf| CString::new(s.to_str().unwrap()).unwrap();
+        let test_path1 = trans(file1);
+        let test_path2 = trans(file2);
 
-        let trans = |s: String| CString::new(s).unwrap();
-        let _test_path1 = trans(r"file1.ext1".to_owned());
-        let _test_path2 = trans(r"file1.ext1".to_owned());
-
-        let mut a: Vec<CString> = args().map(trans).collect();
-        a.remove(0);
-
-        let run_result = super::exchange(a[1].as_ptr(), a[2].as_ptr());
-        println!("{}", run_result);
+        super::exchange(test_path1.as_ptr(), test_path2.as_ptr());
     }
 }

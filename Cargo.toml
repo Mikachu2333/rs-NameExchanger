@@ -1,6 +1,6 @@
 [package]
 name = "rs-NaneExchanger"
-version = "1.0.2"
+version = "1.0.3"
 edition = "2021"
 
 [lib]
@@ -16,9 +16,9 @@ winres = "0.1.12"
 
 [dependencies]
 eframe = "0.31.1"
-tray-icon = "0.20.0"
+tray-icon = "0.20.1"
 windows-sys = "0.59.0"
-winit = "0.30.9"
+winit = "0.30.10"
 mslnk = "0.1.8"
 
 [profile.release]

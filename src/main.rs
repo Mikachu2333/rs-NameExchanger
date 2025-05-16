@@ -8,9 +8,12 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicI32, Ordering};
 use std::{ffi::CString, sync::Mutex};
 use tray_icon::{Icon, MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use windows_sys::Win32::UI::Shell::{FOLDERID_SendTo, SHGetKnownFolderPath, KF_FLAG_DEFAULT};
-use windows_sys::Win32::UI::WindowsAndMessaging::{
-    MessageBoxW, ShowWindow, MB_ICONINFORMATION, MB_OK, SW_HIDE, SW_SHOWDEFAULT,
+use windows_sys::Win32::UI::{
+    Shell::{FOLDERID_SendTo, SHGetKnownFolderPath, KF_FLAG_DEFAULT},
+    WindowsAndMessaging::{
+        ChangeWindowMessageFilterEx, MessageBoxW, ShowWindow, MB_ICONINFORMATION, MB_OK,
+        MSGFLT_ALLOW, SW_HIDE, SW_SHOWDEFAULT, WM_COPY, WM_COPYDATA, WM_DROPFILES,
+    },
 };
 use winit::raw_window_handle::{HasWindowHandle, RawWindowHandle, Win32WindowHandle};
 
@@ -58,7 +61,30 @@ fn main() -> eframe::Result {
                     panic!("Unsupported platform");
                 };
 
-                WINDOW_HANDLE.store(handle_to_hwnd(handle) as i32, Ordering::SeqCst);
+                WINDOW_HANDLE.store(handle_to_hwnd(handle.clone()) as i32, Ordering::SeqCst);
+
+                let hwnd = handle_to_hwnd(handle);
+                unsafe {
+                    // 允许接收拖放相关消息
+                    ChangeWindowMessageFilterEx(
+                        hwnd,
+                        WM_DROPFILES,
+                        MSGFLT_ALLOW,
+                        std::ptr::null_mut(),
+                    );
+                    ChangeWindowMessageFilterEx(
+                        hwnd,
+                        WM_COPYDATA,
+                        MSGFLT_ALLOW,
+                        std::ptr::null_mut(),
+                    );
+                    ChangeWindowMessageFilterEx(
+                        hwnd,
+                        WM_COPY,
+                        MSGFLT_ALLOW,
+                        std::ptr::null_mut(),
+                    );
+                }
 
                 TrayIconEvent::set_event_handler(Some(move |event: TrayIconEvent| match event {
                     TrayIconEvent::Click {
