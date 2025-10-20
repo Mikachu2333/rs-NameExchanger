@@ -1,163 +1,129 @@
-use std::{
-    ffi::{c_char, CStr},
-    path::PathBuf,
-};
+use std::ffi::{c_char, CStr};
+use std::path::{Path, PathBuf};
 
-use file_rename::NameExchange;
-use path_checkout::GetPathInfo;
+mod exchange;
 mod file_rename;
 mod path_checkout;
+mod types;
+
+use crate::exchange::exchange_paths;
+use crate::types::RenameError;
 
 #[no_mangle]
 /// # Safety
-/// 最终暴露的执行函数，传入两个路径String，返回一个u8
+/// C interface function for swapping names of two files or directories
 ///
-/// 0 => Success，1 => No Exist
+/// ### Parameters
+/// * `path1` - First file or directory path (C string pointer)
+/// * `path2` - Second file or directory path (C string pointer)
 ///
-/// 2 => Permission Denied，3 => New File Already Exists
+/// ### Return Value
+/// * `0` - Success
+/// * `1` - File does not exist
+/// * `2` - Permission denied
+/// * `3` - Target file already exists
+/// * `255` - Unknown error
+pub unsafe extern "C" fn exchange(path1: *const c_char, path2: *const c_char) -> i32 {
+    unsafe { convert_inputs(path1, path2) }
+        .and_then(|(path1, path2)| exchange_paths(path1, path2))
+        .map(|_| 0)
+        .unwrap_or_else(|err| {
+            eprintln!("{}", err);
+            err.to_code()
+        })
+}
+
+/// Rust interface function for swapping names of two files or directories
 ///
-/// 255 => UNKNOWN ERROR
-pub extern "C" fn exchange(path1: *const c_char, path2: *const c_char) -> i32 {
-    let binding = std::env::current_exe().unwrap();
-    let exe_dir = binding.parent().unwrap();
+/// ### Parameters
+/// * `path1` - First file or directory path
+/// * `path2` - Second file or directory path
+///
+/// ### Return Value
+/// * `Ok(())` - Success
+/// * `Err(RenameError)` - Error information
+pub fn exchange_rs(path1: &Path, path2: &Path) -> Result<(), types::RenameError> {
+    exchange_paths(path1.to_path_buf(), path2.to_path_buf())
+}
 
-    let transformer = |s: *const c_char| unsafe { CStr::from_ptr(s) }.to_string_lossy().to_string();
+unsafe fn convert_inputs(
+    path1: *const c_char,
+    path2: *const c_char,
+) -> Result<(PathBuf, PathBuf), RenameError> {
+    let path1 = ptr_to_path(path1)?;
+    let path2 = ptr_to_path(path2)?;
+    Ok((path1, path2))
+}
 
-    let path1 = transformer(path1);
-    let path2 = transformer(path2);
-
-    let mut all_infos = NameExchange::new();
-
-    // 用于校验文件夹路径最后是否为斜杠与双引号的闭包
-    let path_check = |s: String| {
-        let temp = s
-            .trim()
-            .trim_matches(['\'', '"', '\\', '\'', '/'])
-            .replace("\\", "/")
-            .replace("//", "/");
-        PathBuf::from(&temp)
-            .canonicalize()
-            .unwrap_or_else(|_| PathBuf::from(&temp))
-    };
-    let mut packed_path = GetPathInfo {
-        path1: path_check(path1),
-        path2: path_check(path2),
-    };
-
-    (all_infos.f1.is_exist, all_infos.f2.is_exist) = (packed_path).if_exist(exe_dir);
-    if (!all_infos.f1.is_exist) || (!all_infos.f2.is_exist) {
-        return 1_i32;
-    }
-    if packed_path.path1 == packed_path.path2 {
-        return 2_i32;
-    }
-    all_infos.f1.exchange.original_path = packed_path.path1.clone();
-    all_infos.f2.exchange.original_path = packed_path.path2.clone();
-
-    (all_infos.f1.is_file, all_infos.f2.is_file) = packed_path.if_file();
-
-    (all_infos.f1.packed_info, all_infos.f2.packed_info) =
-        packed_path.metadata_collect(all_infos.f1.is_file, all_infos.f2.is_file);
-
-    (
-        all_infos.f1.exchange.pre_path,
-        all_infos.f1.exchange.new_path,
-    ) = NameExchange::make_name(
-        &all_infos.f1.packed_info.parent_dir,
-        &all_infos.f2.packed_info.name,
-        &all_infos.f1.packed_info.ext,
-    );
-    (
-        all_infos.f2.exchange.pre_path,
-        all_infos.f2.exchange.new_path,
-    ) = NameExchange::make_name(
-        &all_infos.f2.packed_info.parent_dir,
-        &all_infos.f1.packed_info.name,
-        &all_infos.f2.packed_info.ext,
-    );
-
-    let mut packed_path_new = GetPathInfo {
-        path1: all_infos.f1.exchange.new_path.clone(),
-        path2: all_infos.f2.exchange.new_path.clone(),
-    };
-    let (exist_new_1, exist_new_2) = GetPathInfo::if_exist(&mut packed_path_new, exe_dir);
-    let same_dir = GetPathInfo::if_same_dir(&packed_path_new);
-    if !same_dir && (exist_new_1 || exist_new_2) {
-        //不能因为rename函数里面有就删了……
-        /*
-        println!(
-            "same:{}\tnew1:{}\tnew2:{}",
-            same_dir, exist_new_1, exist_new_2
-        );
-        */
-        return 3_i32;
+unsafe fn ptr_to_path(ptr: *const c_char) -> Result<PathBuf, RenameError> {
+    if ptr.is_null() {
+        return Err(RenameError::NotExists);
     }
 
-    //1 -> parent1, 2 -> parent2
-    let mode = packed_path.if_root();
+    let c_str = CStr::from_ptr(ptr);
+    let raw = c_str.to_string_lossy();
+    let sanitized = sanitize_input(raw.as_ref());
 
-    dbg!(
-        //test
-        all_infos.f1.packed_info.parent_dir.display(),
-        &all_infos.f1.packed_info.name,
-        &all_infos.f1.packed_info.ext
-    );
-    dbg!(
-        all_infos.f2.packed_info.parent_dir.display(),
-        &all_infos.f2.packed_info.name,
-        &all_infos.f2.packed_info.ext
-    );
-    dbg!(mode);
-
-    match (all_infos.f1.is_file, all_infos.f2.is_file) {
-        (true, true) => NameExchange::rename_each(&all_infos, false, true),
-        (false, false) => {
-            // 都是目录，检查包含关系
-            match mode {
-                1 => NameExchange::rename_each(&all_infos, true, false),
-                2 => NameExchange::rename_each(&all_infos, true, true),
-                _ => NameExchange::rename_each(&all_infos, false, true),
-            }
-        }
-        (true, false) => {
-            if mode == 2 {
-                NameExchange::rename_each(&all_infos, true, true)
-            } else {
-                NameExchange::rename_each(&all_infos, false, true)
-            }
-        }
-        (false, true) => {
-            if mode == 1 {
-                NameExchange::rename_each(&all_infos, true, false)
-            } else {
-                NameExchange::rename_each(&all_infos, false, false)
-            }
-        }
+    if sanitized.is_empty() {
+        return Err(RenameError::NotExists);
     }
+
+    Ok(PathBuf::from(sanitized))
+}
+
+fn sanitize_input(input: &str) -> String {
+    input
+        .trim()
+        .trim_matches(|c| c == '"' || c == '\'')
+        .to_string()
 }
 
 #[cfg(test)]
 mod tests {
     use std::{
-        ffi::CString,
-        path::{Path, PathBuf},
+        fs::{self, remove_file},
+        path::PathBuf,
     };
 
     fn clear_olds() -> (PathBuf, PathBuf) {
-        let file1 = Path::new(r"D:\Desktop\f\s\2.txt");
-        let file2 = Path::new(r"D:\Desktop\f");
-        return (file1.to_path_buf(), file2.to_path_buf());
+        let current_exe = std::env::current_exe().unwrap();
+        let base_dir = current_exe.parent().unwrap();
+        let _ = std::env::set_current_dir(base_dir);
+
+        let original_path1 = r"\\wsl.localhost\Debian\home\LinkChou\";
+        let original_path2 = r"";
+
+        let file1 = "1.ext1";
+        let file2 = "2.ext2";
+
+        let exchanged_file1 = "2.ext1";
+        let exchanged_file2 = "1.ext2";
+
+        let path1 = format!(r"{}{}", original_path1, file1);
+        let path2 = format!(r"{}{}", original_path2, file2);
+
+        let exchanged_path1 = format!(r"{}{}", original_path1, exchanged_file1);
+        let exchanged_path2 = format!(r"{}{}", original_path2, exchanged_file2);
+
+        let _ = remove_file(exchanged_path1);
+        let _ = remove_file(exchanged_path2);
+        let _ = fs::File::create(file1);
+        let _ = fs::File::create(file2);
+
+        (PathBuf::from(path1), PathBuf::from(path2))
     }
 
     #[test]
     fn it_works() {
         let (file1, file2) = clear_olds();
-        // 0 => Success，1 => No Exist
-        // 2 => Permission Denied，3 => New File Already Exists
-        let trans = |s: PathBuf| CString::new(s.to_str().unwrap()).unwrap();
-        let test_path1 = trans(file1);
-        let test_path2 = trans(file2);
 
-        super::exchange(test_path1.as_ptr(), test_path2.as_ptr());
+        match super::exchange_rs(&file1, &file2) {
+            Ok(_) => {
+                println!("Success");
+            }
+            Err(e) => {
+                eprintln!("{}", e);
+            }
+        };
     }
 }
