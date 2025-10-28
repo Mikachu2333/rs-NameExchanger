@@ -12,7 +12,7 @@ fn main() {
     version |= 1 << 48;
     version |= 0 << 32;
     version |= 0 << 16;
-    version |= 2;
+    version |= 0;
 
     res.set_version_info(VersionInfo::FILEVERSION, version)
         .set_version_info(VersionInfo::PRODUCTVERSION, version);

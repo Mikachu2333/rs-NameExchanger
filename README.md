@@ -1,15 +1,11 @@
+# NameExchanger using Rust
+
 A FileNameExchanger which use rust and egui frame.
 
 文件名称交换器使用了Rust以及egui框架（代码纯屎）
 
-## Usage
+---
 
-在相应选项悬浮可以看到提示
+Please see other branches for different gui frameworks.
 
-### CLI
-
-`./NaneExchanger.exe file1.path file2.path`
-
-## GUI
-
-![sc](./sc.png)
+请查看其它分支以尝试不同的GUI框架。
