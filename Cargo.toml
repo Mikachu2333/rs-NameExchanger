@@ -1,5 +1,5 @@
 [package]
-name = "rs-NaneExchanger"
+name    = "rs-NaneExchanger"
 version = "1.0.0"
 edition = "2021"
 
@@ -11,12 +11,10 @@ path = "lib/lib.rs"
 name = "NameExchanger"
 path = "src/main.rs"
 
-[build-dependencies]
-winres = "0.1.12"
-
 [dependencies]
+winsafe = { version = "0.0.26", features = ["gui", "version"] }
 
 [profile.release]
-lto = true
+lto       = true
 opt-level = "z"
-strip = true
+strip     = true
