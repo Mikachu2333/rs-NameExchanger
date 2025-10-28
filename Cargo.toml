@@ -1,0 +1,24 @@
+[package]
+name = "rs-NaneExchanger"
+version = "1.0.0"
+edition = "2021"
+
+[lib]
+name = "exchange_lib"
+path = "lib/lib.rs"
+
+[[bin]]
+name = "NameExchanger"
+path = "src/main.rs"
+
+[build-dependencies]
+winres = "0.1.12"
+
+[dependencies]
+freya = "0.3.4"
+
+
+[profile.release]
+lto = true
+opt-level = "z"
+strip = true
