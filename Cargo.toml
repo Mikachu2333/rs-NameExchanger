@@ -12,7 +12,7 @@ name = "NameExchanger"
 path = "src/main.rs"
 
 [dependencies]
-winsafe = { version = "0.0.26", features = ["gui", "version"] }
+winsafe = { version = "0.0.26", features = ["gui"] }
 
 [profile.release]
 lto       = true

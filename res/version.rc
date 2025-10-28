@@ -1,0 +1,34 @@
+#include <winres.h>
+
+101 ICON "logo.ico"
+
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,0
+ PRODUCTVERSION 1,0,0,0
+ FILEFLAGSMASK 0x3f
+ FILEFLAGS 0x0
+ FILEOS 0x00040004
+ FILETYPE 1
+ FILESUBTYPE 0
+BEGIN
+	BLOCK "StringFileInfo"
+	BEGIN
+		BLOCK "040904b0"
+		BEGIN
+			VALUE "CompanyName", "Mikachu2333"
+			VALUE "FileDescription", "Exchange names for files and dirs"
+			VALUE "FileVersion", "1.0.0.0"
+			VALUE "InternalName", "NameExchanger"
+			VALUE "LegalCopyright", "Copyright (c) Mikachu2333. MIT License."
+			VALUE "OriginalFilename", "NameExchanger.exe"
+			VALUE "ProductName", "Name Exchanger"
+			VALUE "ProductVersion", "25.10.29 22-54-02"
+		END
+	END
+	BLOCK "VarFileInfo"
+	BEGIN
+		VALUE "Translation", 0x0409, 1200
+	END
+END
