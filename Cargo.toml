@@ -4,8 +4,9 @@ version = "1.0.0"
 edition = "2021"
 
 [lib]
-name = "exchange_lib"
-path = "lib/lib.rs"
+name = "libs"
+path = "lib/mod.rs"
+
 
 [[bin]]
 name = "NameExchanger"

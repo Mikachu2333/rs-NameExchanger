@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::types::{GetPathInfo, NameExchange, RenameError, DEBUG_MODE};
+use crate::exchange_lib::types::{GetPathInfo, NameExchange, RenameError, DEBUG_MODE};
 
 /// Swap names of two files or directories
 ///

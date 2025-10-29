@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use crate::types::*;
+use crate::exchange_lib::types::*;
 
 /// Main rename logic integration
 impl NameExchange {
@@ -36,7 +36,7 @@ impl NameExchange {
         let mut final_path = dir.to_path_buf();
 
         // Arbitrary long string for distinction
-        let mut temp_name = crate::types::GUID.to_string();
+        let mut temp_name = crate::exchange_lib::types::GUID.to_string();
         temp_name.push_str(&ext);
         temp_path.push(temp_name);
 

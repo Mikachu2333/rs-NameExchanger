@@ -6,8 +6,8 @@ mod file_rename;
 mod path_checkout;
 mod types;
 
-use crate::exchange::exchange_paths;
-use crate::types::RenameError;
+use crate::exchange_lib::exchange::exchange_paths;
+use crate::exchange_lib::types::RenameError;
 
 #[no_mangle]
 /// # Safety
