@@ -2,14 +2,13 @@ use std::path::Path;
 
 mod exchange;
 mod file_rename;
-mod msgbox;
 mod path_checkout;
 mod types;
 
 use crate::exchange::exchange_paths;
 #[allow(unused_imports)]
 use crate::types::RenameError;
-pub use msgbox::info_msgbox;
+
 /// bool: is admin
 /// bool: is EXE
 pub fn init() -> (bool, bool) {

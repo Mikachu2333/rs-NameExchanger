@@ -5,7 +5,7 @@ import {
     Button,
     StandardButton,
     TextEdit,
-    TextEdit,
+    ScrollView,
 } from "std-widgets.slint";
 
 component TitleBar inherits Rectangle {
@@ -57,7 +57,6 @@ component TitleBar inherits Rectangle {
             color: #ff0000;
         }
     }
-
 
     in-out property <bool> is_admin;
     callback admin_clicked();
@@ -123,7 +122,8 @@ export component MainWindow inherits Window {
     width: 400px;
     height: 280px;
     always-on-top: true;
-    in property <bool> is_admin: false;
+    in-out property <bool> is_admin: false;
+    in-out property <string> msgbox_message: "";
     callback request_help();
     callback admin_switch();
     TitleBar {
@@ -131,9 +131,20 @@ export component MainWindow inherits Window {
         is_admin: root.is_admin;
         help_clicked => {
             root.request_help();
+            popup.show()
         }
         admin_clicked => {
             root.admin_switch()
+        }
+    }
+
+    popup := PopupWindow {
+        Rectangle {
+            border-color: #000000;
+            border-width: 1px;
+            Text {
+                text: root.msgbox_message;
+            }
         }
     }
 }
