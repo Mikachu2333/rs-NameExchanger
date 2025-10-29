@@ -1,22 +1,16 @@
 [package]
-name = "rs-NaneExchanger"
+name    = "rs-NaneExchanger"
 version = "1.0.0"
 edition = "2021"
-
-[lib]
-name = "exchange_lib"
-path = "lib/lib.rs"
 
 [[bin]]
 name = "NameExchanger"
 path = "src/main.rs"
 
-[build-dependencies]
-winres = "0.1.12"
-
 [dependencies]
+fltk = { version = "1.5.20", features = ["fltk-bundled"] }
 
 [profile.release]
-lto = true
+lto       = true
 opt-level = "z"
-strip = true
+strip     = true
