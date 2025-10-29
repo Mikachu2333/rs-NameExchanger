@@ -81,52 +81,64 @@ component TitleBar inherits Rectangle {
         }
     }
 
-    Text {
-        font-family: "NameExchangeCustom";
-        width: 40px;
-        height: 40px;
-        text: "F";
+    area_link := TouchArea {
         x: 276px;
-        font-size: 16pt;
-        vertical-alignment: center;
-        horizontal-alignment: center;
-        color: #ffffff;
-    }
-
-    Text {
-        font-family: "NameExchangeCustom";
         width: 40px;
         height: 40px;
-        text: "G";
+        clicked => {
+        //link
+        }
+        Text {
+            font-family: "NameExchangeCustom";
+            width: 40px;
+            height: 40px;
+            text: "F";
+            x: 0;
+            font-size: 16pt;
+            vertical-alignment: center;
+            horizontal-alignment: center;
+            color: #ffffff;
+        }
+    }
+
+    area_min := TouchArea {
         x: 318px;
-        font-size: 16pt;
-        vertical-alignment: center;
-        horizontal-alignment: center;
-        color: #ffffff;
-    }
-
-    Text {
-        font-family: "NameExchangeCustom";
         width: 40px;
         height: 40px;
-        text: "H";
+        clicked => {
+            //min
+        }
+        Text {
+            font-family: "NameExchangeCustom";
+            width: 40px;
+            height: 40px;
+            text: "G";
+            x: 0;
+            font-size: 16pt;
+            vertical-alignment: center;
+            horizontal-alignment: center;
+            color: #ffffff;
+        }
+    }
+
+    area_close := TouchArea {
         x: 360px;
-        font-size: 16pt;
-        vertical-alignment: center;
-        horizontal-alignment: center;
-        color: #ffffff;
-    }
-}
-
-export component HelpInfo inherits Dialog {
-    in-out property <bool> help_show;
-    Text {
-        wrap: word-wrap;
-        text: "拖入文件即可使用，软件将常驻任务栏，悬停鼠标于\n按钮上可获得提示。\n\n软件包含以下功能\n〇管理员身份启动\n〇创建/删除「发送到」菜单快捷方式\n〇置顶\n\n拖入檔案即可使用，軟體將常駐系統匣，懸停鼠標於\n按鈕上可獲得提示。\n\n軟體包含以下功能\n〇總是以系統管理員執行\n〇建立/刪除「傳送到」選單捷徑方式\n〇置頂";
-    }
-
-    StandardButton {
-        kind: ok;
+        width: 40px;
+        height: 40px;
+        clicked => {
+            //close
+        }
+        Text {
+            font-family: "NameExchangeCustom";
+            width: 40px;
+            height: 40px;
+            text: "H";
+            x: 0;
+            font-size: 16pt;
+            vertical-alignment: center;
+            horizontal-alignment: center;
+            color: #ffffff;
+        }
     }
 }
 
@@ -136,17 +148,55 @@ export component MainWindow inherits Window {
     always-on-top: true;
     in-out property <bool> is_admin: false;
     in-out property <string> msgbox_message: "";
-    in-out property <bool> help_show: false;
     callback request_help();
     callback admin_switch();
+
     TitleBar {
         is_top <=> root.always-on-top;
         is_admin: root.is_admin;
         help_clicked => {
-            help_show = true;
+            root.request_help();
+            help_dialog.show();
         }
         admin_clicked => {
             root.admin_switch()
+        }
+    }
+
+    help_dialog := PopupWindow {
+        close-policy: no-auto-close;
+        width: 320px;
+        height: 240px;
+        x: (root.width - self.width) / 2;
+        y: (root.height - self.height) / 2;
+
+        VerticalLayout {
+            padding: 16px;
+            spacing: 12px;
+
+            Text {
+                text: "帮助";
+                font-size: 16px;
+                font-weight: 700;
+            }
+
+            ScrollView {
+                height: 140px;
+                Text {
+                    text: root.msgbox_message;
+                    wrap: word-wrap;
+                }
+            }
+
+            HorizontalLayout {
+                alignment: center;
+                Button {
+                    text: "OK";
+                    clicked => {
+                        help_dialog.close();
+                    }
+                }
+            }
         }
     }
 }
