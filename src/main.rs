@@ -15,7 +15,7 @@ fn main() -> Result<(), slint::PlatformError> {
                 window.set_msgbox_message(
                     libs::show_help().into(),
                 );
-                //
+                
             }
         }
     });
