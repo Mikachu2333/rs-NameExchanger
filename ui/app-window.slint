@@ -118,33 +118,35 @@ component TitleBar inherits Rectangle {
     }
 }
 
+export component HelpInfo inherits Dialog {
+    in-out property <bool> help_show;
+    Text {
+        wrap: word-wrap;
+        text: "拖入文件即可使用，软件将常驻任务栏，悬停鼠标于\n按钮上可获得提示。\n\n软件包含以下功能\n〇管理员身份启动\n〇创建/删除「发送到」菜单快捷方式\n〇置顶\n\n拖入檔案即可使用，軟體將常駐系統匣，懸停鼠標於\n按鈕上可獲得提示。\n\n軟體包含以下功能\n〇總是以系統管理員執行\n〇建立/刪除「傳送到」選單捷徑方式\n〇置頂";
+    }
+
+    StandardButton {
+        kind: ok;
+    }
+}
+
 export component MainWindow inherits Window {
     width: 400px;
     height: 280px;
     always-on-top: true;
     in-out property <bool> is_admin: false;
     in-out property <string> msgbox_message: "";
+    in-out property <bool> help_show: false;
     callback request_help();
     callback admin_switch();
     TitleBar {
         is_top <=> root.always-on-top;
         is_admin: root.is_admin;
         help_clicked => {
-            root.request_help();
-            popup.show()
+            help_show = true;
         }
         admin_clicked => {
             root.admin_switch()
-        }
-    }
-
-    popup := PopupWindow {
-        Rectangle {
-            border-color: #000000;
-            border-width: 1px;
-            Text {
-                text: root.msgbox_message;
-            }
         }
     }
 }
