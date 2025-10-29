@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::exchange_lib::types::*;
+use crate::types::*;
 
 /// All path-related operations
 impl GetPathInfo {

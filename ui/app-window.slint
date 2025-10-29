@@ -1,6 +1,139 @@
-export component MainWindow inherits Window {
+import "./NameExchangeCustom.ttf";
+
+import {
+    LineEdit,
+    Button,
+    StandardButton,
+    TextEdit,
+    TextEdit,
+} from "std-widgets.slint";
+
+component TitleBar inherits Rectangle {
+    width: 400px;
+    height: 40px;
+    background: #0070cb;
+    x: 0;
+    y: 0;
+
+    in-out property <bool> is_top: true;
+
+    area_pin := TouchArea {
+        x: 0px;
+        width: 40px;
+        height: 40px;
+        clicked => {
+            root.is_top = !root.is_top;
+        }
+        Text {
+            width: 40px;
+            height: 40px;
+            x: 0px;
+            text: root.is_top ? "B" : "A";
+            font-family: "NameExchangeCustom";
+            font-size: 16pt;
+            vertical-alignment: center;
+            horizontal-alignment: center;
+            color: #ffff00;
+        }
+    }
+
+    callback help_clicked();
+    area_help := TouchArea {
+        x: 192px;
+        width: 40px;
+        height: 40px;
+        clicked => {
+            root.help_clicked();
+        }
+        Text {
+            x: 0px;
+            width: 40px;
+            height: 40px;
+            text: "C";
+            font-family: "NameExchangeCustom";
+            font-size: 16pt;
+            vertical-alignment: center;
+            horizontal-alignment: center;
+            color: #ff0000;
+        }
+    }
+
+
+    in-out property <bool> is_admin;
+    callback admin_clicked();
+    area_admin := TouchArea {
+        x: 234px;
+        width: 40px;
+        height: 40px;
+        clicked => {
+            root.admin_clicked();
+            is_admin = !is_admin;
+        }
+        Text {
+            font-family: "NameExchangeCustom";
+            width: 40px;
+            height: 40px;
+            text: root.is_admin ? "E" : "D";
+            x: 0px;
+            font-size: 16pt;
+            vertical-alignment: center;
+            horizontal-alignment: center;
+            color: #ffffff;
+        }
+    }
+
     Text {
-        text: "hello world";
-        color: green;
+        font-family: "NameExchangeCustom";
+        width: 40px;
+        height: 40px;
+        text: "F";
+        x: 276px;
+        font-size: 16pt;
+        vertical-alignment: center;
+        horizontal-alignment: center;
+        color: #ffffff;
+    }
+
+    Text {
+        font-family: "NameExchangeCustom";
+        width: 40px;
+        height: 40px;
+        text: "G";
+        x: 318px;
+        font-size: 16pt;
+        vertical-alignment: center;
+        horizontal-alignment: center;
+        color: #ffffff;
+    }
+
+    Text {
+        font-family: "NameExchangeCustom";
+        width: 40px;
+        height: 40px;
+        text: "H";
+        x: 360px;
+        font-size: 16pt;
+        vertical-alignment: center;
+        horizontal-alignment: center;
+        color: #ffffff;
+    }
+}
+
+export component MainWindow inherits Window {
+    width: 400px;
+    height: 280px;
+    always-on-top: true;
+    in property <bool> is_admin: false;
+    callback request_help();
+    callback admin_switch();
+    TitleBar {
+        is_top <=> root.always-on-top;
+        is_admin: root.is_admin;
+        help_clicked => {
+            root.request_help();
+        }
+        admin_clicked => {
+            root.admin_switch()
+        }
     }
 }
