@@ -89,5 +89,14 @@ pub fn is_admin() -> bool {
 /// * `Ok(())` - Success
 /// * `Err(RenameError)` - Error information
 pub fn exchange_rs(path1: &Path, path2: &Path) -> Result<(), types::RenameError> {
-    exchange_paths(path1.to_path_buf(), path2.to_path_buf())
+    match exchange_paths(path1.to_path_buf(), path2.to_path_buf()) {
+        Ok(_) => {
+            println!("Success");
+            Ok(())
+        }
+        Err(err) => {
+            eprintln!("{}", err);
+            Err(err)
+        }
+    }
 }
