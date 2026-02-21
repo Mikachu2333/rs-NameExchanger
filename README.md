@@ -6,6 +6,4 @@ A FileNameExchanger which use rust and egui frame.
 
 ---
 
-Please see other branches for different gui frameworks.
-
-请查看其它分支以尝试不同的GUI框架。
+无法滚动，无法将系统的菜单栏屏蔽。在不调用系统api时难以实现选择性提权、管理员权限时的拖放
