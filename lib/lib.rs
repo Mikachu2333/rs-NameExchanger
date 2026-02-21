@@ -6,7 +6,7 @@ mod file_rename;
 mod path_checkout;
 mod types;
 
-use crate::exchange::exchange_paths;
+use crate::exchange::{exchange_paths, resolve_path};
 use crate::types::RenameError;
 
 #[no_mangle]
@@ -22,11 +22,16 @@ use crate::types::RenameError;
 /// * `1` - File does not exist
 /// * `2` - Permission denied
 /// * `3` - Target file already exists
+/// * `4` - Two paths refer to the same file
+/// * `5` - Invalid path (e.g. non-UTF-8)
 /// * `255` - Unknown error
 pub unsafe extern "C" fn exchange(path1: *const c_char, path2: *const c_char) -> i32 {
     unsafe { convert_inputs(path1, path2) }
         .and_then(|(path1, path2)| exchange_paths(path1, path2))
-        .map(|_| 0)
+        .map(|_| {
+            println!("Success");
+            0
+        })
         .unwrap_or_else(|err| {
             eprintln!("{}", err);
             err.to_code()
@@ -43,7 +48,29 @@ pub unsafe extern "C" fn exchange(path1: *const c_char, path2: *const c_char) ->
 /// * `Ok(())` - Success
 /// * `Err(RenameError)` - Error information
 pub fn exchange_rs(path1: &Path, path2: &Path) -> Result<(), types::RenameError> {
-    exchange_paths(path1.to_path_buf(), path2.to_path_buf())
+    match exchange_paths(path1.to_path_buf(), path2.to_path_buf()) {
+        Ok(_) => {
+            println!("Success");
+            Ok(())
+        }
+        Err(err) => {
+            eprintln!("{}", err);
+            Err(err)
+        }
+    }
+}
+
+/// Resolve and normalize path
+///
+/// ### Parameters
+/// * `path` - Original path
+/// * `base_dir` - Base directory path
+///
+/// ### Return Value
+/// * `Ok((bool, PathBuf))` - Tuple of (is_path_exists, normalized_path)
+/// * `Err(RenameError)` - Path resolution failure
+pub fn resolve_path_rs(path: &Path, base_dir: &Path) -> Result<(bool, PathBuf), types::RenameError> {
+    resolve_path(path, base_dir)
 }
 
 unsafe fn convert_inputs(
@@ -90,27 +117,18 @@ mod tests {
         let base_dir = current_exe.parent().unwrap();
         let _ = std::env::set_current_dir(base_dir);
 
-        let original_path1 = r"\\wsl.localhost\Debian\home\LinkChou\";
-        let original_path2 = r"";
-
         let file1 = "1.ext1";
         let file2 = "2.ext2";
 
         let exchanged_file1 = "2.ext1";
         let exchanged_file2 = "1.ext2";
 
-        let path1 = format!(r"{}{}", original_path1, file1);
-        let path2 = format!(r"{}{}", original_path2, file2);
-
-        let exchanged_path1 = format!(r"{}{}", original_path1, exchanged_file1);
-        let exchanged_path2 = format!(r"{}{}", original_path2, exchanged_file2);
-
-        let _ = remove_file(exchanged_path1);
-        let _ = remove_file(exchanged_path2);
+        let _ = remove_file(exchanged_file1);
+        let _ = remove_file(exchanged_file2);
         let _ = fs::File::create(file1);
         let _ = fs::File::create(file2);
 
-        (PathBuf::from(path1), PathBuf::from(path2))
+        (PathBuf::from(file1), PathBuf::from(file2))
     }
 
     #[test]

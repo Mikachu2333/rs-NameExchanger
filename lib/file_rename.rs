@@ -29,16 +29,23 @@ impl NameExchange {
     ///
     /// ### Return Value
     /// Returns tuple `(temporary file path, final file path)`
-    pub fn make_name(dir: &Path, other_name: impl ToString, ext: impl ToString) -> (PathBuf, PathBuf) {
+    pub fn make_name(
+        dir: &Path,
+        other_name: impl ToString,
+        ext: impl ToString,
+    ) -> (PathBuf, PathBuf) {
         let other_name = other_name.to_string();
         let ext = ext.to_string();
-        let mut temp_path = dir.to_path_buf();
         let mut final_path = dir.to_path_buf();
 
-        // Arbitrary long string for distinction
-        let mut temp_name = crate::types::GUID.to_string();
-        temp_name.push_str(&ext);
-        temp_path.push(temp_name);
+        // Generate unique temporary filename, avoid conflicts with existing files
+        let base_temp = crate::types::GUID;
+        let mut temp_path = dir.join(format!("{}{}", base_temp, ext));
+        let mut counter = 0u64;
+        while temp_path.exists() {
+            counter += 1;
+            temp_path = dir.join(format!("{}_{}{}", base_temp, counter, ext));
+        }
 
         let final_component = if ext.is_empty() {
             other_name
@@ -78,14 +85,17 @@ impl NameExchange {
             tmp_name2 = self.f2.exchange.pre_path.clone();
         }
 
-        //1 first
         if is_nested {
-            // If there is a nesting relationship (parent-child directories or files), 
+            // If there is a nesting relationship (parent-child directories or files),
             // rename directly in order
-            // Do not use temporary files, as using temporary files in nesting relationships 
+            // Do not use temporary files, as using temporary files in nesting relationships
             // may cause path issues
             Self::handle_rename(&path1, &final_name1)?;
-            Self::handle_rename(&path2, &final_name2)?;
+            if let Err(e) = Self::handle_rename(&path2, &final_name2) {
+                // Rollback step 1
+                let _ = Self::handle_rename(&final_name1, &path1);
+                return Err(e);
+            }
             Ok(())
         } else {
             // No nesting relationship: use temporary files for safe swapping
@@ -93,8 +103,20 @@ impl NameExchange {
             // 2. Rename the first file to final name
             // 3. Rename the temporary file to final name
             Self::handle_rename(&path2, &tmp_name2)?;
-            Self::handle_rename(&path1, &final_name1)?;
-            Self::handle_rename(&tmp_name2, &final_name2)?;
+
+            if let Err(e) = Self::handle_rename(&path1, &final_name1) {
+                // Rollback step 1: restore path2
+                let _ = Self::handle_rename(&tmp_name2, &path2);
+                return Err(e);
+            }
+
+            if let Err(e) = Self::handle_rename(&tmp_name2, &final_name2) {
+                // Rollback steps 1 & 2: restore both files
+                let _ = Self::handle_rename(&final_name1, &path1);
+                let _ = Self::handle_rename(&tmp_name2, &path2);
+                return Err(e);
+            }
+
             Ok(())
         }
     }

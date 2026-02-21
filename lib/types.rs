@@ -72,6 +72,8 @@ pub enum RenameError {
     PermissionDenied,
     AlreadyExists,
     NotExists,
+    SamePath,
+    InvalidPath(String),
     Unknown(String),
 }
 
@@ -82,6 +84,8 @@ impl RenameError {
             Self::NotExists => 1,
             Self::PermissionDenied => 2,
             Self::AlreadyExists => 3,
+            Self::SamePath => 4,
+            Self::InvalidPath(_) => 5,
             Self::Unknown(_) => 255,
         }
     }
@@ -93,6 +97,8 @@ impl std::fmt::Display for RenameError {
             Self::PermissionDenied => write!(f, "Permission denied"),
             Self::AlreadyExists => write!(f, "File already exists"),
             Self::NotExists => write!(f, "File does not exist"),
+            Self::SamePath => write!(f, "Two paths refer to the same file"),
+            Self::InvalidPath(msg) => write!(f, "Invalid path: {}", msg),
             Self::Unknown(msg) => write!(f, "Unknown error: {}", msg),
         }
     }

@@ -19,8 +19,8 @@ impl GetPathInfo {
 
     /// Check if two paths are in the same parent directory
     ///
-    /// This method is used to determine if two paths are in the same folder, which is important 
-    /// for determining the safety of rename operations. If two paths are in the same directory, 
+    /// This method is used to determine if two paths are in the same folder, which is important
+    /// for determining the safety of rename operations. If two paths are in the same directory,
     /// certain rename operations may not need temporary files.
     ///
     /// ### Return Value
@@ -35,8 +35,8 @@ impl GetPathInfo {
 
     /// Detect if there is an inclusion relationship between two paths (parent-child directory issue)
     ///
-    /// This method is used to determine if there is an inclusion relationship between two paths, 
-    /// which is crucial for determining the rename order. When two directories have a parent-child 
+    /// This method is used to determine if there is an inclusion relationship between two paths,
+    /// which is crucial for determining the rename order. When two directories have a parent-child
     /// relationship, the rename order will directly affect the success of the operation.
     ///
     /// ### Return Value
@@ -67,7 +67,7 @@ impl GetPathInfo {
     fn path_is_parent(potential_parent: &Path, potential_child: &Path) -> bool {
         // Try to determine the path of child relative to parent
         if let Ok(relative) = potential_child.strip_prefix(potential_parent) {
-            !relative.as_os_str().is_empty()
+            *relative != *""
         } else {
             false
         }
@@ -91,18 +91,18 @@ impl GetPathInfo {
                 Some(i) => {
                     if is_ext {
                         // Whether calculating suffix, if so, add leading dot "."
-                        ".".to_owned() + i.to_str().unwrap()
+                        ".".to_owned() + &i.to_string_lossy()
                     } else {
-                        i.to_str().unwrap().to_string()
+                        i.to_string_lossy().to_string()
                     }
                 }
                 /*
                 If not available, ignore
-                Since verification has been completed earlier, if Err occurs here, 
+                Since verification has been completed earlier, if Err occurs here,
                 it is due to special file naming and does not affect subsequent operations.
                 e.g. "C:\\.cargo\\.config", this file cannot get suffix, this folder also cannot get suffix
                 */
-                None => String::new(),
+                Option::None => String::new(),
             }
         };
 
@@ -118,7 +118,7 @@ impl GetPathInfo {
                 parent_dir: {
                     match &file_path.parent() {
                         Some(i) => i.to_path_buf(),
-                        None => PathBuf::new(),
+                        Option::None => PathBuf::new(),
                     }
                 },
             }
@@ -130,7 +130,7 @@ impl GetPathInfo {
                 parent_dir: {
                     match &file_path.parent() {
                         Some(i) => i.to_path_buf(),
-                        None => PathBuf::new(),
+                        Option::None => PathBuf::new(),
                     }
                 },
             }
