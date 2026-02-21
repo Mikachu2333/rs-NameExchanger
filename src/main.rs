@@ -7,6 +7,16 @@ use fltk::{
     prelude::*,
     window::Window,
 };
+use tray_icon::{Icon, TrayIconBuilder, TrayIconEvent, MouseButton};
+
+fn load_icon() -> Icon {
+    let icon_data = include_bytes!("../res.ico");
+    let image = image::load_from_memory(icon_data).expect("Failed to load icon");
+    let rgba = image.into_rgba8();
+    let (width, height) = rgba.dimensions();
+    let rgba_data = rgba.into_raw();
+    Icon::from_rgba(rgba_data, width, height).expect("Failed to create tray icon")
+}
 
 fn main() {
     let app = app::App::default();
@@ -94,7 +104,7 @@ fn main() {
     let mut input_path1 = Input::new(11, 59, 340, 40, "");
     input_path1.set_text_font(default_font);
     input_path1.set_text_size(15);
-    
+
 
     let mut lbl_path2 = Frame::new(11, 106, 46, 18, "File 2");
     lbl_path2.set_align(Align::Left | Align::Inside);
@@ -116,6 +126,13 @@ fn main() {
     win = win.center_screen();
     win.show();
     win.set_on_top();
+
+    // Setup tray icon
+    let _tray_icon = TrayIconBuilder::new()
+        .with_tooltip("FilenameExchanger")
+        .with_icon(load_icon())
+        .build()
+        .unwrap();
 
     // Make window draggable by top bar
     let mut win_clone = win.clone();
@@ -177,6 +194,25 @@ fn main() {
                 true
             }
             _ => false,
+        }
+    });
+
+    let mut win_clone4 = win.clone();
+    app::add_idle3(move |_| {
+        if let Ok(event) = TrayIconEvent::receiver().try_recv() {
+            match event {
+                TrayIconEvent::Click { button: MouseButton::Left, .. } => {
+                    if win_clone4.shown() {
+                        win_clone4.hide();
+                    } else {
+                        win_clone4.show();
+                    }
+                }
+                TrayIconEvent::Click { button: MouseButton::Right, .. } => {
+                    app::quit();
+                }
+                _ => {}
+            }
         }
     });
 
