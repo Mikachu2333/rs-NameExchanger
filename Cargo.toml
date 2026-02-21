@@ -2,13 +2,19 @@
 name    = "rs-NaneExchanger"
 version = "1.0.0"
 edition = "2021"
+build = "build.rs"
 
 [[bin]]
 name = "NameExchanger"
 path = "src/main.rs"
 
+[build-dependencies]
+embed-resource = "3.0.6"
+
 [dependencies]
-fltk = { version = "1.5.20", features = ["fltk-bundled"] }
+fltk = { version = "1.5.22", features = ["fltk-bundled"] }
+image = "0.25.9"
+tray-icon = "0.21.3"
 
 [profile.release]
 lto       = true

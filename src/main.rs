@@ -13,11 +13,11 @@ fn main() {
 
     // Load custom font
     let custom_font = Font::load_font("NameExchangeCustom.ttf").unwrap();
-    Font::set_font(Font::Helvetica, &custom_font);
+    Font::set_font(Font::Screen, &custom_font);
 
     // Set default font for other elements
     #[cfg(target_os = "windows")]
-    let default_font = "Microsoft YaHei";
+    let default_font = "Microsoft YaHei UI";
     #[cfg(target_os = "linux")]
     let default_font = "Noto Sans CJK SC";
     #[cfg(not(any(target_os = "windows", target_os = "linux")))]
@@ -42,7 +42,7 @@ fn main() {
     btn_top.set_frame(FrameType::FlatBox);
     btn_top.set_color(theme_color);
     btn_top.set_label_color(Color::Yellow);
-    btn_top.set_label_font(Font::Helvetica);
+    btn_top.set_label_font(Font::Screen);
     btn_top.set_label_size(21);
     btn_top.clear_visible_focus();
 
@@ -50,7 +50,7 @@ fn main() {
     btn_tip.set_frame(FrameType::FlatBox);
     btn_tip.set_color(theme_color);
     btn_tip.set_label_color(Color::Red);
-    btn_tip.set_label_font(Font::Helvetica);
+    btn_tip.set_label_font(Font::Screen);
     btn_tip.set_label_size(21);
     btn_tip.clear_visible_focus();
 
@@ -58,7 +58,7 @@ fn main() {
     btn_admin.set_frame(FrameType::FlatBox);
     btn_admin.set_color(theme_color);
     btn_admin.set_label_color(Color::White);
-    btn_admin.set_label_font(Font::Helvetica);
+    btn_admin.set_label_font(Font::Screen);
     btn_admin.set_label_size(21);
     btn_admin.clear_visible_focus();
 
@@ -66,7 +66,7 @@ fn main() {
     btn_menu.set_frame(FrameType::FlatBox);
     btn_menu.set_color(theme_color);
     btn_menu.set_label_color(Color::White);
-    btn_menu.set_label_font(Font::Helvetica);
+    btn_menu.set_label_font(Font::Screen);
     btn_menu.set_label_size(21);
     btn_menu.clear_visible_focus();
 
@@ -74,7 +74,7 @@ fn main() {
     btn_min.set_frame(FrameType::FlatBox);
     btn_min.set_color(theme_color);
     btn_min.set_label_color(Color::White);
-    btn_min.set_label_font(Font::Helvetica);
+    btn_min.set_label_font(Font::Screen);
     btn_min.set_label_size(21);
     btn_min.clear_visible_focus();
 
@@ -82,7 +82,7 @@ fn main() {
     btn_close.set_frame(FrameType::FlatBox);
     btn_close.set_color(theme_color);
     btn_close.set_label_color(Color::White);
-    btn_close.set_label_font(Font::Helvetica);
+    btn_close.set_label_font(Font::Screen);
     btn_close.set_label_size(21);
     btn_close.clear_visible_focus();
 
@@ -91,17 +91,24 @@ fn main() {
     lbl_path1.set_align(Align::Left | Align::Inside);
     lbl_path1.set_label_font(default_font);
 
-    let input_path1 = Input::new(11, 59, 340, 40, "");
+    let mut input_path1 = Input::new(11, 59, 340, 40, "");
+    input_path1.set_text_font(default_font);
+    input_path1.set_text_size(15);
+    
 
     let mut lbl_path2 = Frame::new(11, 106, 46, 18, "File 2");
     lbl_path2.set_align(Align::Left | Align::Inside);
     lbl_path2.set_label_font(default_font);
 
-    let input_path2 = Input::new(11, 126, 340, 40, "");
+    let mut input_path2 = Input::new(11, 126, 340, 40, "");
+    input_path2.set_text_font(default_font);
+    input_path2.set_text_size(15);
+    
 
     // Start button
     let mut btn_start = Button::new(118, 183, 127, 44, "Start");
-    btn_start.set_label_size(19);
+    btn_start.set_label_size(20);
+    btn_start.set_label_font(default_font);
     btn_start.clear_visible_focus();
 
     win.end();
