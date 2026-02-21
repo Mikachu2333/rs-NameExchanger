@@ -6,6 +6,4 @@ A FileNameExchanger which use rust and egui frame.
 
 ---
 
-Please see other branches for different gui frameworks.
-
-请查看其它分支以尝试不同的GUI框架。
+因fltk会自动在无窗口显示时退出，所以无法联动托盘使用……
