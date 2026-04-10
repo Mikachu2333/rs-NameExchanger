@@ -69,7 +69,10 @@ pub fn exchange_rs(path1: &Path, path2: &Path) -> Result<(), types::RenameError>
 /// ### Return Value
 /// * `Ok((bool, PathBuf))` - Tuple of (is_path_exists, normalized_path)
 /// * `Err(RenameError)` - Path resolution failure
-pub fn resolve_path_rs(path: &Path, base_dir: &Path) -> Result<(bool, PathBuf), types::RenameError> {
+pub fn resolve_path_rs(
+    path: &Path,
+    base_dir: &Path,
+) -> Result<(bool, PathBuf), types::RenameError> {
     resolve_path(path, base_dir)
 }
 
@@ -119,12 +122,15 @@ mod tests {
 
         let file1 = "1.ext1";
         let file2 = "2.ext2";
+        let file3 = "1.ext2";
 
         let exchanged_file1 = "2.ext1";
         let exchanged_file2 = "1.ext2";
 
         let _ = remove_file(exchanged_file1);
         let _ = remove_file(exchanged_file2);
+        let _ = remove_file(file3);
+        let _ = fs::File::create(file3);
         let _ = fs::File::create(file1);
         let _ = fs::File::create(file2);
 

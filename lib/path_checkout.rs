@@ -17,22 +17,6 @@ impl GetPathInfo {
         (self.path1.is_file(), self.path2.is_file())
     }
 
-    /// Check if two paths are in the same parent directory
-    ///
-    /// This method is used to determine if two paths are in the same folder, which is important
-    /// for determining the safety of rename operations. If two paths are in the same directory,
-    /// certain rename operations may not need temporary files.
-    ///
-    /// ### Return Value
-    /// * `true` - Both paths are in the same parent directory
-    /// * `false` - Paths are in different parent directories
-    pub fn if_same_dir(&self) -> bool {
-        match (self.path1.parent(), self.path2.parent()) {
-            (Some(parent1), Some(parent2)) => parent1 == parent2,
-            _ => false,
-        }
-    }
-
     /// Detect if there is an inclusion relationship between two paths (parent-child directory issue)
     ///
     /// This method is used to determine if there is an inclusion relationship between two paths,

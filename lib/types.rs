@@ -2,7 +2,7 @@ use std::{io, path::PathBuf};
 
 /// Unique identifier for generating temporary filenames
 /// This GUID is used to create temporary filenames to ensure no conflict with existing files
-pub const GUID: &str = "E642A71D305C343884C";
+pub const GUID: &str = "5E702FA07C2FB332B76B";
 pub const DEBUG_MODE: bool = cfg!(debug_assertions);
 
 /// Store metadata information of file or directory
