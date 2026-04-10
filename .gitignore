@@ -1,2 +1,5 @@
 target/**
 .vscode/*
+
+cpp_src/**
+main_example.rs

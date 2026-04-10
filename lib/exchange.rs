@@ -66,15 +66,15 @@ pub fn exchange_paths(path1: PathBuf, path2: PathBuf) -> Result<(), RenameError>
         &exchange_info.f2.packed_info.ext,
     );
 
-    let new_path_conflict_1 = exchange_info.f1.exchange.new_path.exists();
-    let new_path_conflict_2 = exchange_info.f2.exchange.new_path.exists();
-    let same_parent = GetPathInfo {
-        path1: exchange_info.f1.exchange.new_path.clone(),
-        path2: exchange_info.f2.exchange.new_path.clone(),
-    }
-    .if_same_dir();
+    let is_conflict = |new_path: &PathBuf| {
+        new_path.exists()
+            && *new_path != exchange_info.f1.exchange.original_path
+            && *new_path != exchange_info.f2.exchange.original_path
+    };
 
-    if !same_parent && (new_path_conflict_1 || new_path_conflict_2) {
+    if is_conflict(&exchange_info.f1.exchange.new_path)
+        || is_conflict(&exchange_info.f2.exchange.new_path)
+    {
         return Err(RenameError::AlreadyExists);
     }
 
@@ -147,10 +147,14 @@ pub fn resolve_path(path: &Path, base_dir: &Path) -> Result<(bool, PathBuf), Ren
         use std::path::{Component, Prefix};
 
         path = {
-            let temp = path.to_str()
-                .ok_or_else(|| RenameError::InvalidPath(
-                    format!("Path contains invalid UTF-8: {}", path.display())
-                ))?
+            let temp = path
+                .to_str()
+                .ok_or_else(|| {
+                    RenameError::InvalidPath(format!(
+                        "Path contains invalid UTF-8: {}",
+                        path.display()
+                    ))
+                })?
                 .replace("/", "\\");
             PathBuf::from(temp)
         };
@@ -200,7 +204,8 @@ pub fn resolve_path(path: &Path, base_dir: &Path) -> Result<(bool, PathBuf), Ren
                     }
                 } else {
                     return Err(RenameError::InvalidPath(
-                        "USERPROFILE environment variable is not set, cannot expand '~'".to_string(),
+                        "USERPROFILE environment variable is not set, cannot expand '~'"
+                            .to_string(),
                     ));
                 }
             } else if path.starts_with(".") {
@@ -218,10 +223,14 @@ pub fn resolve_path(path: &Path, base_dir: &Path) -> Result<(bool, PathBuf), Ren
     #[cfg(not(windows))]
     {
         path = {
-            let temp = path.to_str()
-                .ok_or_else(|| RenameError::InvalidPath(
-                    format!("Path contains invalid UTF-8: {}", path.display())
-                ))?
+            let temp = path
+                .to_str()
+                .ok_or_else(|| {
+                    RenameError::InvalidPath(format!(
+                        "Path contains invalid UTF-8: {}",
+                        path.display()
+                    ))
+                })?
                 .replace("\\", "/");
             PathBuf::from(temp)
         };
